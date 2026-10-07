@@ -1,0 +1,67 @@
+Mihir Malaviya mm4186
+Jay Boghawala jvb73
+
+
+Design notes:
+- malloc(0) returns a 16 byte chunk instead of NULL
+- free(NULL) does nothing
+- requests bigger than the heap are rejected before rounding, so huge sizes like SIZE_MAX cant overflow
+- if splitting would leave less than 16 bytes the caller gets the whole chunk, so the leak count can include a few padding bytes
+- free merges right away, so two free chunks are never next to each other and malloc never has to merge
+- freeing a pointer again after its chunk merged into a neighbor is still caught, since that chunks header is gone
+- after a bad free, exit(2) still runs the leak detector, so a leak message can show up after the error
+- tests and memgrind hardcode for 4096 byte heap since they cant see MEMLENGTH
+
+
+Test programs:
+./tests            normal tests, prints PASS/FAIL for each
+./tests notmalloc  free(&x)
+./tests middle     free(p+1)
+./tests twice      free the same pointer twice
+./tests leak       leaks 2 objects on purpose
+
+The bad free ones should print an error and exit 2 (check with echo $?)
+They run one at a time since exit(2) ends the program
+
+
+./memgrind         runs 5 tasks 50 times, prints the average time per run
+1. malloc 8 to 1024 bytes, free in reverse order
+2. malloc 120 1-byte objects, free in the same order
+3. randomly malloc 1 byte or free one until 120 mallocs, then free the rest
+4. fill the heap, free every other one, refill the holes with random sizes, check nothing got overwritten, free all
+5. fill the heap with 256 1-byte objects, free in random order, then malloc the whole heap
+
+
+Test plan:
+1. malloc doesn't overlap objects
+   detect: objects keep the bytes we wrote
+   test: fill the heap with 64 objects, each its own byte, check them (./tests)
+
+2. free gives memory back
+   detect: freed memory can be malloced again
+   test: malloc the whole heap, free it, malloc it again (./tests)
+
+3. free chunks next to each other merge
+   detect: a request bigger than any single freed chunk still fits
+   test: fill the heap with 24 byte chunks, free all, malloc 48 (./tests, memgrind task 5)
+
+4. malloc reports when it can't allocate
+   detect: returns NULL, prints "malloc: Unable to allocate ..."
+   test: malloc(4097) (./tests)
+
+5. free on something not from malloc
+   detect: prints "free: Inappropriate pointer ...", exits 2
+   test: free(&x) (./tests notmalloc)
+
+6. free in the middle of a chunk
+   detect: same error, exits 2
+   test: free(p+1) (./tests middle)
+
+7. double free
+   detect: same error, exits 2
+   test: free the same pointer twice (./tests twice)
+
+8. leaks get reported
+   detect: prints "mymalloc: N bytes leaked in M objects." at exit, nothing if no leaks
+   test: malloc 20 twice without freeing, should say 48 bytes in 2 objects (./tests leak)
+
