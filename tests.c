@@ -38,15 +38,19 @@ static void test_no_overlap(void){
     int n=64;
     int size=HEAPSIZE/n-HEADERSIZE; // fills the heap exactly
     char *ptrs[64];
+    int ok=1;
 
     for (int i=0; i<n; i++){
         ptrs[i] = malloc(size);
+        if (ptrs[i]==NULL){ // heap should fit all of them, so this is a fail
+            ok=0;
+            continue;
+        }
         memset(ptrs[i], i, size);
     }
 
-    int ok=1;
     for (int i=0; i<n; i++)
-        for (int j=0; j<size; j++)
+        for (int j=0; ptrs[i]!=NULL && j<size; j++)
             if (ptrs[i][j]!=i)
                 ok=0;
 
@@ -78,6 +82,20 @@ static void test_coalesce(void){
 
     char *p = malloc(48);
     check("free chunks next to each other merge", p!=NULL);
+    free(p);
+}
+
+// fill the heap with 3 chunks, free the outside two, then the middle one
+// the middle has to merge with both neighbors or the whole heap wont fit
+static void test_coalesce_both_sides(void){
+    char *a = malloc(HEAPSIZE/4 - HEADERSIZE);
+    char *b = malloc(HEAPSIZE/4 - HEADERSIZE);
+    char *c = malloc(HEAPSIZE/2 - HEADERSIZE);
+    free(a);
+    free(c);
+    free(b);
+    char *p = malloc(HEAPSIZE - HEADERSIZE);
+    check("middle chunk merges with both neighbors", a && b && c && p);
     free(p);
 }
 
@@ -122,6 +140,7 @@ int main(int argc, char **argv)
         test_no_overlap();
         test_free_deallocates();
         test_coalesce();
+        test_coalesce_both_sides();
         test_too_big();
         printf("%d failed\n", failures);
         return failures?1:0;

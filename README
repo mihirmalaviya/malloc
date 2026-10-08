@@ -10,8 +10,13 @@ Design notes:
 - free merges right away, so two free chunks are never next to each other and malloc never has to merge
 - freeing a pointer again after its chunk merged into a neighbor is still caught, since that chunks header is gone
 - after a bad free, exit(2) still runs the leak detector, so a leak message can show up after the error
+- MEMLENGTH defaults to 4096 but can be changed at compile time with -DMEMLENGTH=N (N should be a multiple of 8)
 - tests and memgrind hardcode for 4096 byte heap since they cant see MEMLENGTH
 
+
+Building:
+make               builds memgrind and tests
+make clean         removes the executables
 
 Test programs:
 ./tests            normal tests, prints PASS/FAIL for each
@@ -43,7 +48,9 @@ Test plan:
 
 3. free chunks next to each other merge
    detect: a request bigger than any single freed chunk still fits
-   test: fill the heap with 24 byte chunks, free all, malloc 48 (./tests, memgrind task 5)
+   test: fill the heap with 24 byte chunks, free all, malloc 48 (./tests)
+   test: fill the heap with 1 byte objects, free in random order, malloc the whole heap (memgrind task 5)
+   test: fill the heap with 3 chunks, free the outer two then the middle, malloc the whole heap (./tests)
 
 4. malloc reports when it can't allocate
    detect: returns NULL, prints "malloc: Unable to allocate ..."

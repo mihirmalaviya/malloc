@@ -18,7 +18,9 @@
 /* The heap, the header, and the basic helpers                         */
 /* ------------------------------------------------------------------ */
 
+#ifndef MEMLENGTH
 #define MEMLENGTH 4096
+#endif
 
 static union {
     char bytes[MEMLENGTH];

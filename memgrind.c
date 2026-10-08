@@ -21,8 +21,7 @@ struct timeval start, end;
 
 // allocate objects of sizes 8, 16, 32, 64, 128, 512, 1024
 // then free them in reverse order
-static void
-task1(void){
+static void task1(void){
     int sizes[] = {8, 16, 32, 64, 128, 512, 1024};
     char *ptrs[7];
 
@@ -34,8 +33,7 @@ task1(void){
 }
 
 // malloc 120 tiny objects then free them in the same order we made them
-static void
-task2(void){
+static void task2(void){
     char *ptrs[120];
 
     for (int i=0; i<120; i++)
@@ -47,8 +45,7 @@ task2(void){
 
 // randomly either malloc 1 byte or free one we already have
 // keep going until 120 mallocs then free whatevers left
-static void
-task3(void){
+static void task3(void){
     char *ptrs[120];
     int count = 0; 
     int total = 0; // mallocs done
@@ -59,7 +56,7 @@ task3(void){
             count++;
             total++;
         } else {
-            int i = rand() % count;
+            int i = rand()%count;
             free(ptrs[i]);
             ptrs[i]=ptrs[count-1]; // swap trick, so every index left of count is filled still
             count--;
@@ -77,8 +74,7 @@ task3(void){
 #define OBJSIZE (HEAPSIZE / OBJS - HEADERSIZE) // 56
 
 // makes sure obj i still has byte i everywhere
-static void
-check_obj(char *p, int size, int i){
+static void check_obj(char *p, int size, int i){
     for (int j=0; j<size; j++){
         if (p[j] != i){
             printf("task4: object %d got corrupted\n", i);
@@ -89,8 +85,7 @@ check_obj(char *p, int size, int i){
 
 // fill the heap, free every other one, refill the holes with random sizes
 // then free everything
-static void
-task4(void){
+static void task4(void){
     char *ptrs[OBJS];
     int sizes[OBJS];
 
@@ -120,7 +115,7 @@ task4(void){
     for (int i=0; i<OBJS; i+=2){
         sizes[i] = refill[rand()%4];
         ptrs[i] = malloc(sizes[i]);
-        if (ptrs[i] == NULL){
+        if (ptrs[i]==NULL){
             printf("task4: couldnt refill hole %d\n", i);
             sizes[i] = 0;
             continue;
@@ -141,8 +136,7 @@ task4(void){
 // malloc(1) uses the smallest chunk (16 bytes) so 256 of them fill the heap exactly
 #define SMALLOBJS (HEAPSIZE/16)
 
-static void
-task5(void){
+static void task5(void){
     char *ptrs[SMALLOBJS];
     int count = 0;
 
@@ -168,8 +162,7 @@ task5(void){
 }
 
 
-int
-main(void)
+int main(void)
 {
     // record the start time
     gettimeofday(&start, NULL);

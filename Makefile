@@ -1,10 +1,10 @@
-CC = gcc
-CFLAGS = -std=c99 -g -Wall
-
 all: memgrind tests
 
 memgrind: memgrind.c mymalloc.c mymalloc.h
-	$(CC) $(CFLAGS) -o memgrind memgrind.c mymalloc.c
+	gcc -std=c99 -g -Wall -o memgrind memgrind.c mymalloc.c
 
 tests: tests.c mymalloc.c mymalloc.h
-	$(CC) $(CFLAGS) -o tests tests.c mymalloc.c
+	gcc -std=c99 -g -Wall -o tests tests.c mymalloc.c
+
+clean:
+	rm -f memgrind tests
